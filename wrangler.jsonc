@@ -1,22 +1,50 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "dagskra-mcp",
-  "main": "src/index.ts",
-  "compatibility_date": "2025-03-10",
-  "compatibility_flags": ["nodejs_compat"],
-  // Served at dagskra.9z.is. 9z.is is a Cloudflare zone, so the DNS record and
-  // TLS cert are provisioned automatically on deploy.
-  "routes": [{ "pattern": "dagskra.9z.is", "custom_domain": true }],
-  // McpAgent runs as a Durable Object (one per MCP session).
-  "migrations": [{ "new_sqlite_classes": ["DagskraMCP"], "tag": "v1" }],
-  "durable_objects": {
-    "bindings": [{ "class_name": "DagskraMCP", "name": "MCP_OBJECT" }]
-  },
-  // Normalized schedule cache. `wrangler dev` uses a local simulation regardless
-  // of "id"; before the first deploy, run `wrangler kv namespace create SCHEDULE_CACHE`
-  // and paste the returned id below (replacing REPLACE_WITH_REAL_KV_ID).
-  "kv_namespaces": [{ "binding": "SCHEDULE_CACHE", "id": "REPLACE_WITH_REAL_KV_ID" }],
-  // Daily warm of the forward window, 05:00 UTC (= 05:00 Iceland).
-  "triggers": { "crons": ["0 5 * * *"] },
-  "observability": { "enabled": true }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "dagskra-mcp",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-03-10",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	// Served at dagskra.9z.is. 9z.is is a Cloudflare zone, so the DNS record and
+	// TLS cert are provisioned automatically on deploy.
+	"routes": [
+		{
+			"pattern": "dagskra.9z.is",
+			"custom_domain": true
+		}
+	],
+	// McpAgent runs as a Durable Object (one per MCP session).
+	"migrations": [
+		{
+			"new_sqlite_classes": [
+				"DagskraMCP"
+			],
+			"tag": "v1"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "DagskraMCP",
+				"name": "MCP_OBJECT"
+			}
+		]
+	},
+	// Normalized schedule cache (`wrangler dev` uses a local simulation regardless of id).
+	"kv_namespaces": [
+		{
+			"binding": "SCHEDULE_CACHE",
+			"id": "f5c6b7a65cd243609834e531b7ee1a1e"
+		}
+	],
+	// Daily warm of the forward window, 05:00 UTC (= 05:00 Iceland).
+	"triggers": {
+		"crons": [
+			"0 5 * * *"
+		]
+	},
+	"observability": {
+		"enabled": true
+	}
 }
