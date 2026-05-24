@@ -5,17 +5,17 @@ schedule (*dagskrá*) of Icelandic TV channels. It runs on a Cloudflare Worker a
 over the public internet at **`https://dagskra.9z.is/mcp`** — clients connect over the
 network, so there is nothing to install locally.
 
-It currently covers **22 channels** across three broadcasters:
+It currently covers **21 channels** across two broadcasters:
 
 | Station | Channels |
 | --- | --- |
 | **RÚV** (national broadcaster) | RÚV, RÚV 2 |
 | **Sýn** (formerly the Stöð 2 group) | Sýn; Sýn Sport, Sýn Sport 2–6; Sýn Sport Ísland (+ 2–5); Sýn Sport Viaplay; KKI TV 1–6 |
-| **Alþingi** (parliament) | Alþingi — broadcasts of parliamentary sittings (carried on RÚV 2) |
 
 > The higher Sýn Sport Ísland / KKI TV numbers are per-event overflow channels: they only
 > carry programming when several events are live at once and are empty otherwise. Sjónvarp
-> Símans is not covered — it has no publicly readable schedule feed.
+> Símans is not covered — it has no publicly readable schedule feed. Alþingi (parliament)
+> coverage is paused pending better support (its sittings have no published end time).
 
 ---
 
@@ -101,7 +101,6 @@ flowchart TD
 
     Adapters -->|"GET XML"| RUV["RÚV<br/>muninn.ruv.is"]
     Adapters -->|"GET JSON"| SYN["Sýn<br/>www.syn.is/api/epg"]
-    Adapters -->|"GET XML"| ALT["Alþingi<br/>althingi.is"]
 ```
 
 The design separates **gathering** the schedule from **serving** it:
@@ -132,7 +131,6 @@ mapping them onto one common shape. Each broadcaster has a dedicated adapter in
 | --- | --- | --- | --- |
 | **RÚV** | `https://muninn.ruv.is/files/xml/{slug}/{from}/{to}/` | XML | Official schedule files ("dagskrárskjöl"). Supports date ranges. Slugs: `ruv`, `ruv2`. |
 | **Sýn** | `https://www.syn.is/api/epg/{slug}/{YYYY-MM-DD}` | JSON | Sýn plus 18 sport channels (`syn`, `synsport`–`synsport6`, `synsportisland`(+`2`–`5`), `synsportviaplay`, `kkitv1`–`6`). A Vercel-hosted function that can be slow. |
-| **Alþingi** | `https://www.althingi.is/altext/xml/dagskra/` | XML (ISO-8859-1) | Official parliamentary sitting agenda. Sparse — usually just the next sitting; no scheduled end. |
 
 ### Normalization
 
@@ -141,7 +139,7 @@ Both adapters map their source onto the same `Program` interface:
 ```ts
 interface Program {
   channel: string;      // our canonical id, e.g. "ruv"
-  station: string;      // "RÚV" | "Sýn" | "Alþingi"
+  station: string;      // "RÚV" | "Sýn"
   start: string;        // ISO 8601 UTC
   end: string;          // ISO 8601 UTC
   title: string;
@@ -162,9 +160,6 @@ interface Program {
 - **Sýn** (`src/sources/syn.ts`): map each JSON record — `upphaf` + `slotlengd` →
   `start`/`end`, the Icelandic `isltitill` as the title, `lysing` as the description, and
   the `beint` / `frumsyning` / `bannad` flags.
-- **Alþingi** (`src/sources/althingi.ts`): decode the ISO-8859-1 XML and map each sitting
-  (`fundur`) to one program at its start time, with the agenda items folded into the
-  description (sittings have no scheduled end, so `end = start`).
 
 > **Time zones:** Iceland observes UTC year-round (no DST), so an Icelandic local time *is*
 > the UTC time. RÚV's `2026-05-23 07:00:00` becomes `2026-05-23T07:00:00Z` directly, and all
@@ -196,7 +191,7 @@ sequenceDiagram
     participant C as MCP client
     participant M as McpAgent (Worker)
     participant K as KV cache
-    participant U as Upstream (RÚV / Sýn / Alþingi)
+    participant U as Upstream (RÚV / Sýn)
 
     C->>M: tools/call get_schedule(channel, date)
     M->>K: get schedule:{channel}:{date}
@@ -248,7 +243,6 @@ src/
   sources/
     ruv.ts        RÚV muninn XML → Program[]
     syn.ts        Sýn syn.is JSON → Program[]
-    althingi.ts   Alþingi agenda XML → Program[]
 test/
   sources.test.ts parser unit tests (deterministic, offline)
 scripts/

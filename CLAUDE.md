@@ -6,8 +6,11 @@ the internet — no local install.
 
 ## Status
 - **Live & deployed.** GitHub: `git@github.com:HermannBjorgvin/dagskra.git` (branch `main`).
-- **Covered: 22 channels** — RÚV (+ RÚV 2); Sýn + 18 sport channels; Alþingi. See "Data sources".
+- **Covered: 21 channels** — RÚV (+ RÚV 2); Sýn + 18 sport channels. See "Data sources".
 - **Out of scope:** Sjónvarp Símans (no public schedule feed).
+- **Paused:** Alþingi (parliament) — removed pending better support (sittings have no
+  published end and can run past midnight; needs live end-time tracking). Source dossier
+  kept in agent memory for re-adding.
 - **Deploy is manual** (`npx wrangler deploy`, run by Hermann). The committed code can be ahead
   of the live worker — check before assuming a change is live.
 
@@ -18,7 +21,7 @@ Cron (daily 05:00 UTC) ─▶ source adapters ─▶ normalize ─▶ KV cache �
 - `src/index.ts` — Worker entry: routes `/mcp`, `/health`; `scheduled()` runs the cron.
 - `src/mcp.ts` — `DagskraMCP extends McpAgent` (Cloudflare Agents SDK). Tools + resources.
 - `src/cache.ts` — KV read with fetch-on-miss; `refreshAll()` warms the forward window.
-- `src/sources/{ruv,syn,althingi}.ts` — fetch + parse one source into `Program[]` (`src/schema.ts`).
+- `src/sources/{ruv,syn}.ts` — fetch + parse one source into `Program[]` (`src/schema.ts`).
 - `src/channels.ts` — the channel registry (id → source + upstream slug).
 - MCP reads the **cache only** (via `getSchedule`), so query latency is decoupled from the
   sometimes-flaky upstreams.
@@ -35,8 +38,8 @@ Cron (daily 05:00 UTC) ─▶ source adapters ─▶ normalize ─▶ KV cache �
   Slugs: `syn`, `synsport`–`synsport6`, `synsportisland` (+ `2`–`5`), `synsportviaplay`,
   `kkitv1`–`6`. Full lineup discovered via `/api/epg/beint`. No `stod2*` slugs (those requests
   hang). Higher Ísland/KKI TV numbers are per-event overflow (often empty).
-- **Alþingi** — `https://www.althingi.is/altext/xml/dagskra/` (official XML, **ISO-8859-1** —
-  decode with `TextDecoder("iso-8859-1")`). Sparse (usually the next sitting); no scheduled end.
+- **Alþingi** — *paused, not wired up.* Was `https://www.althingi.is/altext/xml/dagskra/`
+  (official XML, ISO-8859-1). Full dossier in agent memory; re-add with live end-time tracking.
 - **Original broadcaster sources only — never aggregators** (sjonvarp.is, apis.is). If a channel
   is only on an aggregator it's out of scope (why Omega and N4 were dropped).
 - **Dead, do not use:** `apis.is/tv` (expired SSL), `api.stod2.is` (404, old host).

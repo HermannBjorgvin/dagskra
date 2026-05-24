@@ -1,4 +1,4 @@
-export type SourceKind = "ruv" | "syn" | "althingi";
+export type SourceKind = "ruv" | "syn";
 
 export interface Channel {
   /** Our canonical id (used in tool args and cache keys). */
@@ -27,9 +27,8 @@ export interface Channel {
  * overflow channels that are empty most days (harmless — they just return []).
  * Sjónvarp Símans has no public EPG feed and stays out of scope.
  *
- * Alþingi (parliament TV) publishes its session agenda as official XML on
- * althingi.is; it broadcasts on RÚV 2 when in session. Its "schedule" is sparse
- * (typically the next sitting), not a full-day EPG.
+ * Alþingi (parliament TV) was removed pending better support (live end-time
+ * tracking); the source dossier lives in agent memory for when we re-add it.
  */
 export const CHANNELS: Channel[] = [
   { id: "ruv", name: "RÚV", station: "RÚV", source: "ruv", slug: "ruv" },
@@ -53,7 +52,6 @@ export const CHANNELS: Channel[] = [
   { id: "kkitv4", name: "KKI TV 4", station: "Sýn", source: "syn", slug: "kkitv4" },
   { id: "kkitv5", name: "KKI TV 5", station: "Sýn", source: "syn", slug: "kkitv5" },
   { id: "kkitv6", name: "KKI TV 6", station: "Sýn", source: "syn", slug: "kkitv6" },
-  { id: "althingi", name: "Alþingi", station: "Alþingi", source: "althingi", slug: "althingi" },
 ];
 
 export function getChannel(id: string): Channel | undefined {

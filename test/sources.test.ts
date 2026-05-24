@@ -2,13 +2,11 @@ import { describe, expect, it } from "vitest";
 import { nowNext, windowDates } from "../src/cache.js";
 import { getChannel } from "../src/channels.js";
 import type { Program } from "../src/schema.js";
-import { parseAlthingi } from "../src/sources/althingi.js";
 import { addDuration, parseRuv } from "../src/sources/ruv.js";
 import { parseSyn, type SynItem } from "../src/sources/syn.js";
 
 const ruv = getChannel("ruv")!;
 const syn = getChannel("syn")!;
-const althingi = getChannel("althingi")!;
 
 // Trimmed from a real muninn response (2026-05-23).
 const RUV_XML = `<?xml version="1.0" encoding="utf-8" ?>
@@ -105,42 +103,6 @@ describe("parseSyn", () => {
       rating: "Green",
     });
     expect(p.series).toEqual({ season: 1, episode: 12, total: 26 });
-  });
-});
-
-// Decoded from the real althingi.is feed (the live feed is ISO-8859-1).
-const ALTHINGI_XML = `<?xml version="1.0" encoding="iso-8859-1"?>
-<textavarp>
-<fundur>
-<fundarnúmer>110. fundur</fundarnúmer>
-<dagur>þriðjudagur</dagur>
-<dagsetning>26.5.2026</dagsetning>
-<tími>kl. 13:30</tími>
-<dagskrárliður>
-<númer>1</númer><heiti>Óundirbúinn fyrirspurnatími</heiti></dagskrárliður>
-<dagskrárliður>
-<númer>2</númer><heiti>Þjóðaratkvæðagreiðsla um aðild að ESB</heiti></dagskrárliður>
-</fundur>
-<fréttir>
-</fréttir>
-</textavarp>`;
-
-describe("parseAlthingi", () => {
-  const programs = parseAlthingi(ALTHINGI_XML, althingi);
-  it("maps a sitting to a normalized program", () => {
-    expect(programs).toHaveLength(1);
-    expect(programs[0]).toMatchObject({
-      channel: "althingi",
-      station: "Alþingi",
-      start: "2026-05-26T13:30:00Z", // "26.5.2026" + "kl. 13:30", Iceland = UTC
-      title: "Þingfundur – 110. fundur",
-      category: "Þingfundur",
-    });
-  });
-  it("folds the agenda items into the description", () => {
-    expect(programs[0].description).toBe(
-      "1. Óundirbúinn fyrirspurnatími; 2. Þjóðaratkvæðagreiðsla um aðild að ESB",
-    );
   });
 });
 
