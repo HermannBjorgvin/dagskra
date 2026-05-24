@@ -69,8 +69,15 @@ export class DagskraMCP extends McpAgent<Env> {
       },
       async ({ channel, date }) => {
         const day = date ?? today();
-        const programs = await getSchedule(this.env, channel, day);
-        return { content: [{ type: "text", text: `${channel} — ${day}\n${formatDay(programs)}` }] };
+        try {
+          const programs = await getSchedule(this.env, channel, day);
+          return { content: [{ type: "text", text: `${channel} — ${day}\n${formatDay(programs)}` }] };
+        } catch (e) {
+          return {
+            content: [{ type: "text", text: `${channel} — ${day}\nVilla við að sækja dagskrá: ${String(e)}` }],
+            isError: true,
+          };
+        }
       },
     );
 
@@ -84,14 +91,21 @@ export class DagskraMCP extends McpAgent<Env> {
       async ({ channel, at }) => {
         const when = at ? new Date(at) : new Date();
         const [prev, day, next] = windowDates(when);
-        // The target day is required; the neighbours are best-effort enrichment.
-        const [before, target, after] = await Promise.all([
-          getSchedule(this.env, channel, prev).catch(() => [] as Program[]),
-          getSchedule(this.env, channel, day),
-          getSchedule(this.env, channel, next).catch(() => [] as Program[]),
-        ]);
-        const programs = [...before, ...target, ...after].sort((a, b) => a.start.localeCompare(b.start));
-        return json({ channel, at: when.toISOString(), ...nowNext(programs, when) });
+        try {
+          // The target day is required; the neighbours are best-effort enrichment.
+          const [before, target, after] = await Promise.all([
+            getSchedule(this.env, channel, prev).catch(() => [] as Program[]),
+            getSchedule(this.env, channel, day),
+            getSchedule(this.env, channel, next).catch(() => [] as Program[]),
+          ]);
+          const programs = [...before, ...target, ...after].sort((a, b) => a.start.localeCompare(b.start));
+          return json({ channel, at: when.toISOString(), ...nowNext(programs, when) });
+        } catch (e) {
+          return {
+            content: [{ type: "text", text: `Villa við að sækja dagskrá fyrir ${channel}: ${String(e)}` }],
+            isError: true,
+          };
+        }
       },
     );
 
