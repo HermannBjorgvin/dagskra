@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dagskra-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-10",
+  "compatibility_flags": ["nodejs_compat"],
+  // McpAgent runs as a Durable Object (one per MCP session).
+  "migrations": [{ "new_sqlite_classes": ["DagskraMCP"], "tag": "v1" }],
+  "durable_objects": {
+    "bindings": [{ "class_name": "DagskraMCP", "name": "MCP_OBJECT" }]
+  },
+  // Normalized schedule cache. `wrangler dev` uses a local simulation; replace
+  // "id" with a real namespace id (`wrangler kv namespace create SCHEDULE_CACHE`)
+  // before deploying.
+  "kv_namespaces": [{ "binding": "SCHEDULE_CACHE", "id": "local_dev_placeholder" }],
+  // Daily warm of the forward window, 05:00 UTC (= 05:00 Iceland).
+  "triggers": { "crons": ["0 5 * * *"] },
+  "observability": { "enabled": true }
+}
