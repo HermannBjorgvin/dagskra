@@ -7,7 +7,7 @@ the internet — no local install.
 ## Status
 - **Live & deployed.** GitHub: `git@github.com:HermannBjorgvin/dagskra.git` (branch `main`).
 - **Covered: 22 channels** — RÚV (+ RÚV 2); Sýn + 18 sport channels; Alþingi. See "Data sources".
-- **Out of scope:** Sjónvarp Símans and premium Stöð 2 movie/family channels (no public feed).
+- **Out of scope:** Sjónvarp Símans (no public schedule feed).
 - **Deploy is manual** (`npx wrangler deploy`, run by Hermann). The committed code can be ahead
   of the live worker — check before assuming a change is live.
 
@@ -33,8 +33,8 @@ Cron (daily 05:00 UTC) ─▶ source adapters ─▶ normalize ─▶ KV cache �
   `ruv2` (TV); `ras1`/`ras2` are radio (unused). Times are Icelandic local = **UTC** (no DST).
 - **Sýn** — `https://www.syn.is/api/epg/{slug}/{YYYY-MM-DD}` (JSON, Vercel-hosted, can be slow).
   Slugs: `syn`, `synsport`–`synsport6`, `synsportisland` (+ `2`–`5`), `synsportviaplay`,
-  `kkitv1`–`6`. Full lineup discovered via `/api/epg/beint`. No `stod2*` and no movie/family
-  channels (those slugs hang). Higher Ísland/KKI TV numbers are per-event overflow (often empty).
+  `kkitv1`–`6`. Full lineup discovered via `/api/epg/beint`. No `stod2*` slugs (those requests
+  hang). Higher Ísland/KKI TV numbers are per-event overflow (often empty).
 - **Alþingi** — `https://www.althingi.is/altext/xml/dagskra/` (official XML, **ISO-8859-1** —
   decode with `TextDecoder("iso-8859-1")`). Sparse (usually the next sitting); no scheduled end.
 - **Original broadcaster sources only — never aggregators** (sjonvarp.is, apis.is). If a channel

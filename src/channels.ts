@@ -20,8 +20,8 @@ export interface Channel {
  *
  * Sýn hf. rebranded its "Stöð 2 Sport" tier to "Sýn Sport", and the flagship
  * general-entertainment feed is published under slug `syn`. There are no `stod2*`
- * slugs and no movie/family channels (Bíó/Gull/Fjölskylda) — those requests hang
- * on the upstream. Beyond the officially-published syn/synsport feeds, the rest of
+ * slugs — those requests hang on the upstream. Beyond the officially-published
+ * syn/synsport feeds, the rest of
  * the sport lineup (Sport Ísland, Viaplay, KKI TV) was discovered via the
  * `/api/epg/beint` endpoint. The higher Sport Ísland / KKI TV numbers are per-event
  * overflow channels that are empty most days (harmless — they just return []).

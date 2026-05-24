@@ -15,8 +15,7 @@ It currently covers **22 channels** across three broadcasters:
 
 > The higher Sýn Sport Ísland / KKI TV numbers are per-event overflow channels: they only
 > carry programming when several events are live at once and are empty otherwise. Sjónvarp
-> Símans and the premium Stöð 2 movie/family channels (Bíó/Gull/Fjölskylda) are not covered —
-> they have no publicly readable schedule feed.
+> Símans is not covered — it has no publicly readable schedule feed.
 
 ---
 
