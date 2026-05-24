@@ -5,15 +5,18 @@ schedule (*dagskrá*) of Icelandic TV channels. It runs on a Cloudflare Worker a
 over the public internet at **`https://dagskra.9z.is/mcp`** — clients connect over the
 network, so there is nothing to install locally.
 
-It currently covers **8 channels** across two broadcasters:
+It currently covers **22 channels** across three broadcasters:
 
 | Station | Channels |
 | --- | --- |
 | **RÚV** (national broadcaster) | RÚV, RÚV 2 |
-| **Sýn** (formerly the Stöð 2 group) | Sýn, Sýn Sport, Sýn Sport 2–5 |
+| **Sýn** (formerly the Stöð 2 group) | Sýn; Sýn Sport, Sýn Sport 2–6; Sýn Sport Ísland (+ 2–5); Sýn Sport Viaplay; KKI TV 1–6 |
+| **Alþingi** (parliament) | Alþingi — broadcasts of parliamentary sittings (carried on RÚV 2) |
 
-> Sjónvarp Símans and the premium Stöð 2 channels (Bíó/Gull/Fjölskylda) are out of scope:
-> they have no publicly accessible schedule feed. See [Limitations](#limitations).
+> The higher Sýn Sport Ísland / KKI TV numbers are per-event overflow channels: they only
+> carry programming when several events are live at once and are empty otherwise. Sjónvarp
+> Símans and the premium Stöð 2 movie/family channels (Bíó/Gull/Fjölskylda) are not covered —
+> they have no publicly readable schedule feed.
 
 ---
 
@@ -38,6 +41,7 @@ flowchart TD
 
     Adapters -->|"GET XML"| RUV["RÚV<br/>muninn.ruv.is"]
     Adapters -->|"GET JSON"| SYN["Sýn<br/>www.syn.is/api/epg"]
+    Adapters -->|"GET XML"| ALT["Alþingi<br/>althingi.is"]
 ```
 
 The design separates **gathering** the schedule from **serving** it:
@@ -67,7 +71,8 @@ mapping them onto one common shape. Each broadcaster has a dedicated adapter in
 | Broadcaster | Endpoint | Format | Notes |
 | --- | --- | --- | --- |
 | **RÚV** | `https://muninn.ruv.is/files/xml/{slug}/{from}/{to}/` | XML | Official schedule files ("dagskrárskjöl"). Supports date ranges. Slugs: `ruv`, `ruv2`. |
-| **Sýn** | `https://www.syn.is/api/epg/{slug}/{YYYY-MM-DD}` | JSON | Slugs: `syn`, `synsport`, `synsport2`–`synsport5`. A Vercel-hosted function that can be slow. |
+| **Sýn** | `https://www.syn.is/api/epg/{slug}/{YYYY-MM-DD}` | JSON | Sýn plus 18 sport channels (`syn`, `synsport`–`synsport6`, `synsportisland`(+`2`–`5`), `synsportviaplay`, `kkitv1`–`6`). A Vercel-hosted function that can be slow. |
+| **Alþingi** | `https://www.althingi.is/altext/xml/dagskra/` | XML (ISO-8859-1) | Official parliamentary sitting agenda. Sparse — usually just the next sitting; no scheduled end. |
 
 ### Normalization
 
@@ -76,7 +81,7 @@ Both adapters map their source onto the same `Program` interface:
 ```ts
 interface Program {
   channel: string;      // our canonical id, e.g. "ruv"
-  station: string;      // "RÚV" | "Sýn"
+  station: string;      // "RÚV" | "Sýn" | "Alþingi"
   start: string;        // ISO 8601 UTC
   end: string;          // ISO 8601 UTC
   title: string;
@@ -97,6 +102,9 @@ interface Program {
 - **Sýn** (`src/sources/syn.ts`): map each JSON record — `upphaf` + `slotlengd` →
   `start`/`end`, the Icelandic `isltitill` as the title, `lysing` as the description, and
   the `beint` / `frumsyning` / `bannad` flags.
+- **Alþingi** (`src/sources/althingi.ts`): decode the ISO-8859-1 XML and map each sitting
+  (`fundur`) to one program at its start time, with the agenda items folded into the
+  description (sittings have no scheduled end, so `end = start`).
 
 > **Time zones:** Iceland observes UTC year-round (no DST), so an Icelandic local time *is*
 > the UTC time. RÚV's `2026-05-23 07:00:00` becomes `2026-05-23T07:00:00Z` directly, and all
@@ -107,7 +115,7 @@ interface Program {
 ```mermaid
 flowchart LR
     Cron["Cron · 05:00 UTC"] --> RA["refreshAll(days = 5)"]
-    RA --> Loop{"for each<br/>channel × date<br/>(8 × 5)"}
+    RA --> Loop{"for each channel ×<br/>the next 5 days"}
     Loop --> FCD["fetchChannelDate()"]
     FCD --> Norm["adapter: fetch + parse + normalize"]
     Norm --> Put["KV put<br/>schedule:{channel}:{date}<br/>(TTL 3 days)"]
@@ -128,7 +136,7 @@ sequenceDiagram
     participant C as MCP client
     participant M as McpAgent (Worker)
     participant K as KV cache
-    participant U as Upstream (RÚV / Sýn)
+    participant U as Upstream (RÚV / Sýn / Alþingi)
 
     C->>M: tools/call get_schedule(channel, date)
     M->>K: get schedule:{channel}:{date}
@@ -180,6 +188,7 @@ src/
   sources/
     ruv.ts        RÚV muninn XML → Program[]
     syn.ts        Sýn syn.is JSON → Program[]
+    althingi.ts   Alþingi agenda XML → Program[]
 test/
   sources.test.ts parser unit tests (deterministic, offline)
 scripts/
@@ -225,16 +234,3 @@ npx wrangler deploy
 ```
 
 The SQLite-backed Durable Object that `McpAgent` uses is available on the Workers Free plan.
-
----
-
-## Limitations
-
-- **No Sjónvarp Símans / premium Stöð 2 channels.** Síminn's schedule lives behind a
-  JS app on the OZ platform with no clean public feed, and the premium Stöð 2 channels
-  (Bíó/Gull/Fjölskylda) aren't published anywhere we can read. (Sýn rebranded its
-  "Stöð 2 Sport" tier to "Sýn Sport"; there are no `stod2*` schedule slugs.)
-- **The `/mcp` endpoint is public and authless.** Fine for read-only public schedule data;
-  there is no write surface. Rate-limiting can be added at the Cloudflare edge if needed.
-- **Upstream feeds are unofficial to consume.** They can change shape without notice; the
-  adapters are written defensively but may need updates if a broadcaster changes its feed.
