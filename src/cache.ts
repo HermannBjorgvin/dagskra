@@ -23,6 +23,25 @@ export function forwardDates(days: number): string[] {
   );
 }
 
+/** The day of `when` plus its neighbours (yesterday/tomorrow), as YYYY-MM-DD.
+ *  A "what's on now" query needs them: a programme can have started yesterday
+ *  and run past midnight, and the next programme late at night is tomorrow's. */
+export function windowDates(when: Date): string[] {
+  return [-1, 0, 1].map((offset) =>
+    new Date(when.getTime() + offset * 86_400_000).toISOString().slice(0, 10),
+  );
+}
+
+/** The current and next program at `when`, given programs sorted by start. */
+export function nowNext(
+  programs: Program[],
+  when: Date,
+): { now: Program | null; next: Program | null } {
+  const now = programs.find((p) => new Date(p.start) <= when && when < new Date(p.end)) ?? null;
+  const next = programs.find((p) => new Date(p.start) > when) ?? null;
+  return { now, next };
+}
+
 /** Fetch directly from the upstream source for one channel/day. */
 export async function fetchChannelDate(channelId: string, date: string): Promise<Program[]> {
   const ch = getChannel(channelId);

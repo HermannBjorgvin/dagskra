@@ -2,7 +2,7 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import { McpAgent } from "agents/mcp";
 import { z } from "zod";
 import { CHANNELS } from "./channels.js";
-import { forwardDates, getSchedule, today } from "./cache.js";
+import { forwardDates, getSchedule, nowNext, today, windowDates } from "./cache.js";
 import type { Env } from "./env.js";
 import type { Program } from "./schema.js";
 
@@ -83,10 +83,15 @@ export class DagskraMCP extends McpAgent<Env> {
       },
       async ({ channel, at }) => {
         const when = at ? new Date(at) : new Date();
-        const programs = await getSchedule(this.env, channel, when.toISOString().slice(0, 10));
-        const now = programs.find((p) => new Date(p.start) <= when && when < new Date(p.end)) ?? null;
-        const next = programs.find((p) => new Date(p.start) > when) ?? null;
-        return json({ channel, at: when.toISOString(), now, next });
+        const [prev, day, next] = windowDates(when);
+        // The target day is required; the neighbours are best-effort enrichment.
+        const [before, target, after] = await Promise.all([
+          getSchedule(this.env, channel, prev).catch(() => [] as Program[]),
+          getSchedule(this.env, channel, day),
+          getSchedule(this.env, channel, next).catch(() => [] as Program[]),
+        ]);
+        const programs = [...before, ...target, ...after].sort((a, b) => a.start.localeCompare(b.start));
+        return json({ channel, at: when.toISOString(), ...nowNext(programs, when) });
       },
     );
 

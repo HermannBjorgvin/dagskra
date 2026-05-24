@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { nowNext, windowDates } from "../src/cache.js";
 import { getChannel } from "../src/channels.js";
+import type { Program } from "../src/schema.js";
 import { parseAlthingi } from "../src/sources/althingi.js";
 import { addDuration, parseRuv } from "../src/sources/ruv.js";
 import { parseSyn, type SynItem } from "../src/sources/syn.js";
@@ -139,5 +141,43 @@ describe("parseAlthingi", () => {
     expect(programs[0].description).toBe(
       "1. Óundirbúinn fyrirspurnatími; 2. Þjóðaratkvæðagreiðsla um aðild að ESB",
     );
+  });
+});
+
+describe("windowDates", () => {
+  it("returns yesterday, the day, and tomorrow", () => {
+    expect(windowDates(new Date("2026-05-24T00:05:00Z"))).toEqual([
+      "2026-05-23",
+      "2026-05-24",
+      "2026-05-25",
+    ]);
+  });
+  it("crosses month boundaries", () => {
+    expect(windowDates(new Date("2026-06-01T00:30:00Z"))).toEqual([
+      "2026-05-31",
+      "2026-06-01",
+      "2026-06-02",
+    ]);
+  });
+});
+
+describe("nowNext", () => {
+  // The merged window whats_on assembles: a programme spanning midnight (from the
+  // day before) followed by the first programme of the next day.
+  const programs: Program[] = [
+    { channel: "ruv", station: "RÚV", start: "2026-05-23T23:30:00Z", end: "2026-05-24T00:30:00Z", title: "Næturvakt" },
+    { channel: "ruv", station: "RÚV", start: "2026-05-24T00:30:00Z", end: "2026-05-24T06:00:00Z", title: "Dagskrárlok" },
+  ];
+
+  it("finds a programme that started yesterday and runs past midnight", () => {
+    const { now, next } = nowNext(programs, new Date("2026-05-24T00:15:00Z"));
+    expect(now?.title).toBe("Næturvakt");
+    expect(next?.title).toBe("Dagskrárlok");
+  });
+
+  it("finds tomorrow's first programme as next, late at night", () => {
+    const { now, next } = nowNext(programs, new Date("2026-05-23T23:55:00Z"));
+    expect(now?.title).toBe("Næturvakt");
+    expect(next?.title).toBe("Dagskrárlok");
   });
 });
