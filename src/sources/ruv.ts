@@ -17,7 +17,7 @@ function toIso(local: string): string {
 export function addDuration(startIso: string, dur: string): string {
   const [h = 0, m = 0, s = 0] = dur.split(":").map(Number);
   const ms = ((h * 60 + m) * 60 + s) * 1000;
-  return new Date(new Date(startIso).getTime() + ms).toISOString().replace(".000Z", "Z");
+  return new Date(new Date(startIso).getTime() + ms).toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
 function asArray<T>(v: T | T[] | undefined | null): T[] {
