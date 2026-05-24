@@ -29,13 +29,17 @@ export async function fetchSyn(channel: Channel, date: string): Promise<Program[
 }
 
 export function parseSyn(items: SynItem[], channel: Channel): Program[] {
-  return items.map((it) => {
+  // Sort by start so a slotlengd-less item can borrow the next item's start as
+  // its end. EPG is gapless, so the next programme's start is the true end; the
+  // day's last item (no successor) falls back to a zero-length slot.
+  const sorted = [...items].sort((a, b) => a.upphaf.localeCompare(b.upphaf));
+  return sorted.map((it, i) => {
     const title = it.isltitill || it.titill || "(óþekkt)";
     return {
       channel: channel.id,
       station: channel.station,
       start: it.upphaf,
-      end: it.slotlengd ? addDuration(it.upphaf, it.slotlengd) : it.upphaf,
+      end: it.slotlengd ? addDuration(it.upphaf, it.slotlengd) : (sorted[i + 1]?.upphaf ?? it.upphaf),
       title,
       originalTitle: it.titill && it.titill !== title ? it.titill : undefined,
       description: it.lysing || it.undirtitill || undefined,

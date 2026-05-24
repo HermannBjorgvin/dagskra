@@ -181,3 +181,19 @@ describe("nowNext", () => {
     expect(next?.title).toBe("Dagskrárlok");
   });
 });
+
+describe("parseSyn end without slotlengd", () => {
+  it("borrows the next programme's start when slotlengd is missing", () => {
+    const items: SynItem[] = [
+      { upphaf: "2026-05-23T20:00:00Z", titill: "A" }, // no slotlengd
+      { upphaf: "2026-05-23T21:30:00Z", slotlengd: "00:30", titill: "B" },
+    ];
+    const ps = parseSyn(items, syn);
+    expect(ps[0].end).toBe("2026-05-23T21:30:00Z"); // next item's start
+    expect(ps[1].end).toBe("2026-05-23T22:00:00Z"); // its own slotlengd
+  });
+  it("falls back to start for the day's last item with no slotlengd", () => {
+    const ps = parseSyn([{ upphaf: "2026-05-23T23:00:00Z", titill: "Last" }], syn);
+    expect(ps[0].end).toBe("2026-05-23T23:00:00Z");
+  });
+});
