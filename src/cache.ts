@@ -1,6 +1,7 @@
 import { CHANNELS, getChannel } from "./channels.js";
 import type { Env } from "./env.js";
 import type { Program } from "./schema.js";
+import { fetchAlthingi } from "./sources/althingi.js";
 import { fetchRuv } from "./sources/ruv.js";
 import { fetchSyn } from "./sources/syn.js";
 
@@ -26,7 +27,19 @@ export function forwardDates(days: number): string[] {
 export async function fetchChannelDate(channelId: string, date: string): Promise<Program[]> {
   const ch = getChannel(channelId);
   if (!ch) throw new Error(`Unknown channel: ${channelId}`);
-  const programs = ch.source === "ruv" ? await fetchRuv(ch, date, date) : await fetchSyn(ch, date);
+  let programs: Program[];
+  switch (ch.source) {
+    case "ruv":
+      programs = await fetchRuv(ch, date, date);
+      break;
+    case "syn":
+      programs = await fetchSyn(ch, date);
+      break;
+    case "althingi":
+      // The feed has no date parameter; we fetch all sittings and filter below.
+      programs = await fetchAlthingi(ch);
+      break;
+  }
   return programs.filter((p) => p.start.startsWith(date)).sort((a, b) => a.start.localeCompare(b.start));
 }
 
