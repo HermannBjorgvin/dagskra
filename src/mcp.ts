@@ -110,16 +110,15 @@ export class DagskraMCP extends McpAgent<Env> {
         const ids = channels?.length ? channels : CHANNELS.map((c) => c.id);
         const dates = forwardDates(days ?? 3);
         const q = query.toLowerCase();
-        const hits: Program[] = [];
-        for (const id of ids) {
-          for (const date of dates) {
-            const programs = await getSchedule(this.env, id, date).catch(() => [] as Program[]);
-            for (const p of programs) {
-              if (`${p.title} ${p.description ?? ""}`.toLowerCase().includes(q)) hits.push(p);
-            }
-          }
-        }
-        hits.sort((a, b) => a.start.localeCompare(b.start));
+        // Fetch every channel/day in parallel; individual failures are tolerated
+        // so one flaky channel can't sink the whole search (best-effort by design).
+        const schedules = await Promise.all(
+          ids.flatMap((id) => dates.map((date) => getSchedule(this.env, id, date).catch(() => [] as Program[]))),
+        );
+        const hits = schedules
+          .flat()
+          .filter((p) => `${p.title} ${p.description ?? ""}`.toLowerCase().includes(q))
+          .sort((a, b) => a.start.localeCompare(b.start));
         return json(hits);
       },
     );
