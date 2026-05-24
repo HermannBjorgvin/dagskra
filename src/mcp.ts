@@ -90,6 +90,9 @@ export class DagskraMCP extends McpAgent<Env> {
       },
       async ({ channel, at }) => {
         const when = at ? new Date(at) : new Date();
+        if (Number.isNaN(when.getTime())) {
+          return { content: [{ type: "text", text: `Ógilt tímagildi (at): ${at}` }], isError: true };
+        }
         const [prev, day, next] = windowDates(when);
         try {
           // The target day is required; the neighbours are best-effort enrichment.
