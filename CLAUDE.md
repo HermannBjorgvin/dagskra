@@ -53,7 +53,10 @@ Cron (daily 05:00 UTC) ─▶ source adapters ─▶ normalize ─▶ KV cache �
   or `npx @modelcontextprotocol/inspector` then set Transport "Streamable HTTP" + the /mcp URL.
 
 ## Conventions
-- npm/npx (not pnpm/yarn). ESM; imports use `.js` extensions. Keep upstream Icelandic text.
+- npm/npx (not pnpm/yarn). ESM; imports use `.js` extensions.
+- **All API/interface strings are English** — error messages, display labels (e.g. `LIVE`,
+  `episode`), and placeholders like `(unknown)`. Only **upstream content** stays in its
+  original Icelandic: program titles, descriptions, categories, and channel/station names.
 - Commit incrementally with a clean, readable history (Conventional Commits) — this matters here.
 - Surface tradeoffs before fighting a library's conventions; surgical changes only.
 

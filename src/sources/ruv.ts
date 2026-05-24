@@ -64,7 +64,7 @@ export function parseRuv(xml: string, channel: Channel): Program[] {
         station: channel.station,
         start,
         end: addDuration(start, String(ev["@_duration"] ?? "00:00:00")),
-        title: txt(ev.title) || "(óþekkt)",
+        title: txt(ev.title) || "(unknown)",
         originalTitle: txt(ev["original-title"]) || undefined,
         description:
           cdataText(ev.description) ||

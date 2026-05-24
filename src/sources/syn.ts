@@ -34,7 +34,7 @@ export function parseSyn(items: SynItem[], channel: Channel): Program[] {
   // day's last item (no successor) falls back to a zero-length slot.
   const sorted = [...items].sort((a, b) => a.upphaf.localeCompare(b.upphaf));
   return sorted.map((it, i) => {
-    const title = it.isltitill || it.titill || "(óþekkt)";
+    const title = it.isltitill || it.titill || "(unknown)";
     return {
       channel: channel.id,
       station: channel.station,

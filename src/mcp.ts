@@ -8,14 +8,14 @@ import type { Program } from "./schema.js";
 
 /** Render a day's programs as a compact, human-readable list (HH:MM titles). */
 function formatDay(programs: Program[]): string {
-  if (!programs.length) return "Engin dagskrá fannst.";
+  if (!programs.length) return "No programs found.";
   return programs
     .map((p) => {
       const time = p.start.slice(11, 16);
       const ep = p.series?.episode
-        ? ` (þáttur ${p.series.episode}${p.series.total ? "/" + p.series.total : ""})`
+        ? ` (episode ${p.series.episode}${p.series.total ? "/" + p.series.total : ""})`
         : "";
-      const flags = [p.live && "BEINT", p.premiere && "FRUMSÝNING", p.rerun && "ENDURT."]
+      const flags = [p.live && "LIVE", p.premiere && "PREMIERE", p.rerun && "RERUN"]
         .filter(Boolean)
         .join(" ");
       return `${time}  ${p.title}${ep}${flags ? "  [" + flags + "]" : ""}`;
@@ -74,7 +74,7 @@ export class DagskraMCP extends McpAgent<Env> {
           return { content: [{ type: "text", text: `${channel} — ${day}\n${formatDay(programs)}` }] };
         } catch (e) {
           return {
-            content: [{ type: "text", text: `${channel} — ${day}\nVilla við að sækja dagskrá: ${String(e)}` }],
+            content: [{ type: "text", text: `${channel} — ${day}\nCould not fetch schedule: ${String(e)}` }],
             isError: true,
           };
         }
@@ -91,7 +91,7 @@ export class DagskraMCP extends McpAgent<Env> {
       async ({ channel, at }) => {
         const when = at ? new Date(at) : new Date();
         if (Number.isNaN(when.getTime())) {
-          return { content: [{ type: "text", text: `Ógilt tímagildi (at): ${at}` }], isError: true };
+          return { content: [{ type: "text", text: `Invalid 'at' time: ${at}` }], isError: true };
         }
         const [prev, day, next] = windowDates(when);
         try {
@@ -105,7 +105,7 @@ export class DagskraMCP extends McpAgent<Env> {
           return json({ channel, at: when.toISOString(), ...nowNext(programs, when) });
         } catch (e) {
           return {
-            content: [{ type: "text", text: `Villa við að sækja dagskrá fyrir ${channel}: ${String(e)}` }],
+            content: [{ type: "text", text: `Could not fetch schedule for ${channel}: ${String(e)}` }],
             isError: true,
           };
         }
