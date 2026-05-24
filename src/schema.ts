@@ -15,7 +15,10 @@ export interface Program {
   category?: string;
   series?: { season?: number; episode?: number; total?: number };
   live?: boolean;
+  /** First showing, where the source reports it (e.g. Sýn's `frumsyning`). */
   premiere?: boolean;
+  /** Repeat broadcast, where the source reports it (e.g. RÚV's `<rerun>`). */
+  rerun?: boolean;
   /** Age/content rating as given upstream, e.g. "Green". */
   rating?: string;
 }

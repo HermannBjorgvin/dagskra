@@ -15,7 +15,9 @@ function formatDay(programs: Program[]): string {
       const ep = p.series?.episode
         ? ` (þáttur ${p.series.episode}${p.series.total ? "/" + p.series.total : ""})`
         : "";
-      const flags = [p.live && "BEINT", p.premiere && "FRUMSÝNING"].filter(Boolean).join(" ");
+      const flags = [p.live && "BEINT", p.premiere && "FRUMSÝNING", p.rerun && "ENDURT."]
+        .filter(Boolean)
+        .join(" ");
       return `${time}  ${p.title}${ep}${flags ? "  [" + flags + "]" : ""}`;
     })
     .join("\n");

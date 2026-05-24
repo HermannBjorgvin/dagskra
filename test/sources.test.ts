@@ -24,6 +24,12 @@ const RUV_XML = `<?xml version="1.0" encoding="utf-8" ?>
         <episode-description />
       </details>
     </event>
+    <event event-id="5444748" serie-id="40000" start-time="2026-05-23 10:00:00" duration="00:30:00" mark="no">
+      <title>Endursýning</title>
+      <live>no</live>
+      <rerun>yes</rerun>
+      <category value="2">Fréttir</category>
+    </event>
   </service>
 </schedule>`;
 
@@ -57,8 +63,8 @@ describe("addDuration", () => {
 
 describe("parseRuv", () => {
   const programs = parseRuv(RUV_XML, ruv);
-  it("extracts one normalized program", () => {
-    expect(programs).toHaveLength(1);
+  it("extracts each event as a normalized program", () => {
+    expect(programs).toHaveLength(2);
   });
   it("maps fields correctly", () => {
     const p = programs[0];
@@ -73,6 +79,10 @@ describe("parseRuv", () => {
     });
     expect(p.series).toEqual({ episode: 145, total: 200 });
     expect(p.description).toBe("Barnaefni RÚV."); // falls back to series-description
+  });
+  it("maps rerun from <rerun>, leaving it unset for non-repeats", () => {
+    expect(programs[0].rerun).toBeUndefined(); // <rerun>no</rerun>
+    expect(programs[1].rerun).toBe(true); // <rerun>yes</rerun>
   });
 });
 

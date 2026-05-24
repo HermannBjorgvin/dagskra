@@ -74,7 +74,8 @@ export function parseRuv(xml: string, channel: Channel): Program[] {
         category: txt(ev.category) || undefined,
         series: episode || total ? { episode, total } : undefined,
         live: txt(ev.live) === "yes" || undefined,
-        // RÚV's feed has no reliable premiere flag (only <rerun>), so leave it unset.
+        // RÚV's feed has no premiere flag, but it does mark repeats via <rerun>.
+        rerun: txt(ev.rerun) === "yes" || undefined,
         rating: txt(ev.rating) || undefined,
       });
     }
