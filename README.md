@@ -19,6 +19,67 @@ It currently covers **22 channels** across three broadcasters:
 
 ---
 
+## Connecting a client
+
+dagskra is a **remote** MCP server over **Streamable HTTP** at `https://dagskra.9z.is/mcp` —
+nothing to install and no API key (it's public and read-only). Add it to your client:
+
+### Claude Code (CLI)
+
+```bash
+claude mcp add --transport http dagskra https://dagskra.9z.is/mcp
+```
+
+Add `-s user` to make it available in every project. Check it with `/mcp` inside Claude Code.
+
+### Claude Desktop
+
+**Settings → Connectors → Add custom connector**, then paste `https://dagskra.9z.is/mcp`.
+
+If your build has no custom-connector UI, bridge it through `mcp-remote` in
+`claude_desktop_config.json` and restart the app:
+
+```json
+{
+  "mcpServers": {
+    "dagskra": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://dagskra.9z.is/mcp"]
+    }
+  }
+}
+```
+
+### Codex CLI
+
+Add to `~/.codex/config.toml` (Codex's `codex mcp add` is stdio-only, so edit the file directly for a remote server):
+
+```toml
+[mcp_servers.dagskra]
+url = "https://dagskra.9z.is/mcp"
+```
+
+### GitHub Copilot CLI
+
+Run `/mcp add` in the CLI, choose **HTTP**, set the URL to `https://dagskra.9z.is/mcp`, leave
+tools as `*`, and press Ctrl+S. Or add it to `~/.copilot/mcp-config.json`:
+
+```json
+{
+  "mcpServers": {
+    "dagskra": {
+      "type": "http",
+      "url": "https://dagskra.9z.is/mcp",
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+Once connected, try *"What's on RÚV tonight?"* or call `get_schedule` with `{"channel": "ruv"}`.
+
+---
+
 ## Architecture
 
 ```mermaid
