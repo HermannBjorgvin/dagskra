@@ -14,12 +14,15 @@ export interface Channel {
 }
 
 /**
- * Phase 1 channels. RÚV via muninn XML and Sýn via the syn.is JSON API are the
- * confirmed-working feeds (verified 2026-05-23). `syn` and `synsport` are tested;
- * `synsport2/3/4` are documented but unverified. The Stöð 2-brand slugs
- * (stod2, stod2bio, ...) returned 504 from syn.is and are NOT included until the
- * correct slugs are discovered (sniff syn.is/sjonvarp/dagskra network calls).
- * Sjónvarp Símans is deliberately out of scope for now (no clean public feed).
+ * Channels, all verified against live feeds (2026-05-24):
+ * - RÚV via muninn XML: `ruv`, `ruv2`.
+ * - Sýn via the syn.is JSON API: `syn` and `synsport`..`synsport5`.
+ *
+ * Sýn hf. rebranded its "Stöð 2 Sport" tier to "Sýn Sport", and the flagship
+ * general-entertainment feed is published under slug `syn`. There are no `stod2*`
+ * EPG slugs — those requests hang on the upstream (not a 404). The premium Stöð 2
+ * channels (Bíó/Gull/Fjölskylda) and Sjónvarp Símans have no public EPG feed, so
+ * they are out of scope.
  */
 export const CHANNELS: Channel[] = [
   { id: "ruv", name: "RÚV", station: "RÚV", source: "ruv", slug: "ruv" },
@@ -29,6 +32,7 @@ export const CHANNELS: Channel[] = [
   { id: "synsport2", name: "Sýn Sport 2", station: "Sýn", source: "syn", slug: "synsport2" },
   { id: "synsport3", name: "Sýn Sport 3", station: "Sýn", source: "syn", slug: "synsport3" },
   { id: "synsport4", name: "Sýn Sport 4", station: "Sýn", source: "syn", slug: "synsport4" },
+  { id: "synsport5", name: "Sýn Sport 5", station: "Sýn", source: "syn", slug: "synsport5" },
 ];
 
 export function getChannel(id: string): Channel | undefined {
