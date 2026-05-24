@@ -16,7 +16,7 @@ export interface Channel {
 /**
  * Channels, all verified against live feeds (2026-05-24):
  * - RÚV via muninn XML: `ruv`, `ruv2`.
- * - Sýn via the syn.is JSON API: `syn` and `synsport`..`synsport5`.
+ * - Sýn via the syn.is JSON API: `syn` and `synsport`..`synsport6`.
  *
  * Sýn hf. rebranded its "Stöð 2 Sport" tier to "Sýn Sport", and the flagship
  * general-entertainment feed is published under slug `syn`. There are no `stod2*`
